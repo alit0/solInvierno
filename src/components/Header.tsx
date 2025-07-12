@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Sun, ChevronDown } from 'lucide-react';
 
@@ -7,53 +7,78 @@ const Header = () => {
   const [isLaEscuelaOpen, setIsLaEscuelaOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const headerRef = useRef<HTMLElement>(null);
+
+  const getHeaderHeight = () => {
+    return headerRef.current ? headerRef.current.offsetHeight : 0;
+  };
+
+  const smoothScrollTo = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      const headerHeight = getHeaderHeight();
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }
 
   const scrollToSection = (path: string, e?: React.MouseEvent) => {
     e?.preventDefault();
-    
-    // Cerrar el menú móvil si está abierto
     setIsMenuOpen(false);
-    
-    // Si es un enlace a una sección (contiene #)
+
     if (path.includes('#')) {
       const [pathname, hash] = path.split('#');
-      
-      // Navegar a la ruta si no estamos ya en ella
       if (pathname && pathname !== location.pathname) {
         navigate(pathname, { state: { scrollTo: hash } });
       } else if (hash) {
-        // Si ya estamos en la ruta, solo hacer scroll
-        const element = document.getElementById(hash);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        smoothScrollTo(hash);
       }
     } else {
-      // Para rutas normales
       if (path !== location.pathname) {
         navigate(path);
       }
-      // Hacer scroll al inicio de la página
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Efecto para manejar el scroll cuando se carga la página con un hash
   useEffect(() => {
-    if (location.hash) {
-      const element = document.getElementById(location.hash.substring(1));
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const handleScroll = () => {
+      const scrollToId = location.state?.scrollTo || (location.hash ? location.hash.substring(1) : null);
+
+      if (scrollToId) {
+        // Usamos requestAnimationFrame para asegurar que el DOM está listo
+        requestAnimationFrame(() => {
+          const element = document.getElementById(scrollToId);
+          if (element) {
+            smoothScrollTo(scrollToId);
+            // Limpiamos el estado para que no se repita el scroll en futuras navegaciones
+            if (location.state?.scrollTo) {
+              navigate(location.pathname, { replace: true, state: {} });
+            }
+          } else {
+            // Si el elemento no se encuentra de inmediato, reintentamos una vez más.
+            // Esto puede ser útil en componentes con carga de datos asíncrona.
+            setTimeout(() => {
+              smoothScrollTo(scrollToId);
+              if (location.state?.scrollTo) {
+                navigate(location.pathname, { replace: true, state: {} });
+              }
+            }, 100);
+          }
+        });
+      } else if (location.pathname === '/' && location.search === '') {
+        // Solo hacer scroll al top en la página de inicio y sin hash/state
+        window.scrollTo({ top: 0, behavior: 'auto' });
       }
-    } else if (location.state?.scrollTo) {
-      const element = document.getElementById(location.state.scrollTo);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } else {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    }
-  }, [location]);
+    };
+
+    handleScroll();
+  }, [location, navigate]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -64,7 +89,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-warm-white border-b border-sage-green/10 sticky top-0 z-50">
+    <header ref={headerRef} className="bg-warm-white border-b border-sage-green/10 sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}

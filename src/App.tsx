@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -12,10 +11,12 @@ import Donaciones from './pages/Donaciones';
 import Contacto from './pages/Contacto';
 import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
 import ImpulsoDetail from './components/ImpulsoDetail';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-warm-white">
         <Header />
         <main>

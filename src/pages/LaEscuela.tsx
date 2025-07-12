@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Heart, Users, Lightbulb, BookOpen, Palette, TreePine } from 'lucide-react';
 
@@ -50,7 +50,7 @@ const LaEscuela = () => {
   return (
     <div className="min-h-screen bg-warm-white">
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 bg-warm-white">
+      <section id="propuesta-educativa" className="py-16 lg:py-24 bg-warm-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
@@ -80,7 +80,7 @@ const LaEscuela = () => {
       </section>
 
       {/* Objetivos Fundamentales */}
-      <section className="py-16 bg-blue-gray">
+      <section id="nuestros-objetivos" className="py-16 bg-blue-gray">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-heading font-bold text-sage-green mb-6">
@@ -126,7 +126,7 @@ const LaEscuela = () => {
       </section>
 
       {/* Valores Centrales */}
-      <section className="py-16 bg-warm-white">
+      <section id="valores-centrales" className="py-16 bg-warm-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-heading font-bold text-sage-green mb-6">
@@ -192,7 +192,7 @@ const LaEscuela = () => {
       </section>
 
       {/* Equipo y Comunidad */}
-      <section className="py-16 bg-warm-white">
+      <section id="nuestra-historia" className="py-16 bg-warm-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-heading font-bold text-sage-green mb-6">

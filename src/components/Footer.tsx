@@ -1,7 +1,38 @@
-import React from 'react';
+
 import { MapPin, Phone, Mail, Sun } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLinkClick = (path: string) => {
+    const [pathname, hash] = path.split('#');
+
+    const smoothScrollTo = (id: string) => {
+      const element = document.getElementById(id);
+      if (element) {
+        const header = document.querySelector('header');
+        const headerHeight = header?.offsetHeight || 70; // Fallback height
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - headerHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+    };
+
+    if (pathname !== location.pathname) {
+      navigate(pathname, { state: { scrollTo: hash } });
+    } else {
+      if (hash) {
+        smoothScrollTo(hash);
+      }
+    }
+  };
+
   return (
     <footer className="bg-sage-green text-warm-white py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,10 +58,10 @@ const Footer = () => {
           <div>
             <h4 className="font-heading font-semibold mb-4">La Escuela</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Propuesta Educativa</a></li>
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Niveles</a></li>
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Pedagogía Waldorf</a></li>
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Nuestra Historia</a></li>
+              <li><button onClick={() => handleLinkClick('/la-escuela#propuesta-educativa')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Propuesta Educativa</button></li>
+              <li><button onClick={() => handleLinkClick('/niveles')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Niveles</button></li>
+              <li><button onClick={() => handleLinkClick('/la-escuela#pedagogia-waldorf')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Pedagogía Waldorf</button></li>
+              <li><button onClick={() => handleLinkClick('/la-escuela#nuestra-historia')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Nuestra Historia</button></li>
             </ul>
           </div>
 
@@ -38,10 +69,10 @@ const Footer = () => {
           <div>
             <h4 className="font-heading font-semibold mb-4">Comunidad</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Impulsos</a></li>
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">La Tiendita</a></li>
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Donaciones</a></li>
-              <li><a href="#" className="text-warm-white/80 hover:text-warm-white transition-colors">Eventos</a></li>
+              <li><button onClick={() => handleLinkClick('/impulsos')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Impulsos</button></li>
+              <li><button onClick={() => handleLinkClick('/la-tiendita')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">La Tiendita</button></li>
+              <li><button onClick={() => handleLinkClick('/donaciones')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Donaciones</button></li>
+              <li><button onClick={() => handleLinkClick('/eventos')} className="text-warm-white/80 hover:text-warm-white transition-colors text-left">Eventos</button></li>
             </ul>
           </div>
 
