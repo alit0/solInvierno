@@ -1,13 +1,49 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Sun, ChevronDown } from 'lucide-react';
+import { Menu, X, Sun, ChevronDown, UserCircle, LogOut } from 'lucide-react';
+import { supabase } from '../config/supabase';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLaEscuelaOpen, setIsLaEscuelaOpen] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const headerRef = useRef<HTMLElement>(null);
+
+  // Verificar si el administrador está autenticado con Supabase
+  useEffect(() => {
+    const checkAdminAuth = async () => {
+      // Obtener sesión actual de Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Si hay sesión, verificar si el usuario es admin
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAdminAuthenticated(profileData?.role === 'admin');
+      } else {
+        setIsAdminAuthenticated(false);
+      }
+    };
+    
+    // Verificar al cargar el componente
+    checkAdminAuth();
+    
+    // Suscribirse a cambios de autenticación en Supabase
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      checkAdminAuth();
+    });
+    
+    return () => {
+      // Limpiar suscripción cuando el componente se desmonte
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const getHeaderHeight = () => {
     return headerRef.current ? headerRef.current.offsetHeight : 0;
@@ -86,6 +122,15 @@ const Header = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAdminAuthenticated(false);
+    // Si estamos en una ruta de admin, redirigir a la página principal
+    if (location.pathname.includes('/adminsol')) {
+      navigate('/');
+    }
   };
 
   return (
@@ -196,20 +241,62 @@ const Header = () => {
             >
               Contacto
             </Link>
+            
+            {/* Botones de Admin - Solo visibles cuando está autenticado */}
+            {isAdminAuthenticated && (
+              <>
+                <Link 
+                  to="/adminsol/dashboard" 
+                  className="flex items-center text-accent-purple hover:text-amber-700 transition-colors font-medium"
+                >
+                  <UserCircle className="h-5 w-5 mr-1" />
+                  <span>Admin</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center text-red-600 hover:text-red-800 transition-colors font-medium"
+                >
+                  <LogOut className="h-5 w-5 mr-1" />
+                  <span>Salir</span>
+                </button>
+              </>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMenu}
-            className="lg:hidden p-2 rounded-lg hover:bg-sage-green/10 transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? (
-              <X className="h-6 w-6 text-sage-green" />
-            ) : (
-              <Menu className="h-6 w-6 text-sage-green" />
+          <div className="flex items-center lg:hidden">
+            {/* Botones de Admin para móvil - Solo visibles cuando está autenticado */}
+            {isAdminAuthenticated && (
+              <div className="flex mr-3">
+                <Link 
+                  to="/adminsol/dashboard" 
+                  className="p-2 text-accent-purple hover:text-amber-700"
+                  aria-label="Admin Dashboard"
+                >
+                  <UserCircle className="h-6 w-6" />
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-red-600 hover:text-red-800"
+                  aria-label="Cerrar Sesión"
+                >
+                  <LogOut className="h-6 w-6" />
+                </button>
+              </div>
             )}
-          </button>
+            
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-lg hover:bg-sage-green/10 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6 text-sage-green" />
+              ) : (
+                <Menu className="h-6 w-6 text-sage-green" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -272,6 +359,30 @@ const Header = () => {
               >
                 Contacto
               </Link>
+              
+              {/* Opciones de admin para móvil - Solo visibles cuando está autenticado */}
+              {isAdminAuthenticated && (
+                <>
+                  <Link 
+                    to="/adminsol/dashboard" 
+                    className="text-accent-purple hover:text-amber-700 transition-colors font-medium py-2 flex items-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <UserCircle className="h-5 w-5 mr-2" />
+                    Panel de Administrador
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="text-red-600 hover:text-red-800 transition-colors font-medium py-2 flex items-center w-full text-left"
+                  >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    Cerrar Sesión
+                  </button>
+                </>
+              )}
             </div>
           </nav>
         )}

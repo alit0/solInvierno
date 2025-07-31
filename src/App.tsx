@@ -12,13 +12,18 @@ import Contacto from './pages/Contacto';
 import PreguntasFrecuentes from './pages/PreguntasFrecuentes';
 import ImpulsoDetail from './components/ImpulsoDetail';
 import ScrollToTop from './components/ScrollToTop';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
+  // Determine if current path is admin route
+  const isAdminRoute = window.location.pathname.startsWith('/adminsol');
+
   return (
     <Router>
       <ScrollToTop />
       <div className="min-h-screen bg-warm-white">
-        <Header />
+        {!isAdminRoute && <Header />}
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -31,9 +36,13 @@ function App() {
             <Route path="/donaciones" element={<Donaciones />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/preguntas-frecuentes" element={<PreguntasFrecuentes />} />
+            
+            {/* Rutas de administrador (secretas) */}
+            <Route path="/adminsol" element={<AdminLogin />} />
+            <Route path="/adminsol/dashboard" element={<AdminDashboard />} />
           </Routes>
         </main>
-        <Footer />
+        {!isAdminRoute && <Footer />}
       </div>
     </Router>
   );
