@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Pencil, Save, X } from 'lucide-react';
 import { supabase } from '../config/supabase';
+import EditButton from './EditButton';
 
 interface CommunitySectionContent {
   id: string;
@@ -168,27 +169,25 @@ const CommunitySection = () => {
             <div className="flex space-x-2">
               <button
                 onClick={handleSave}
-                className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
               >
-                <Save className="h-4 w-4 mr-1" />
-                Guardar
+                <Save className="h-4 w-4" />
               </button>
               <button
-                onClick={handleCancel}
-                className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditedContent(content);
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
               >
-                <X className="h-4 w-4 mr-1" />
-                Cancelar
+                <X className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <button
+            <EditButton 
               onClick={() => setIsEditing(true)}
-              className="flex items-center bg-accent-purple hover:bg-accent-purple/90 text-white px-3 py-1 rounded text-sm"
-            >
-              <Pencil className="h-4 w-4 mr-1" />
-              Editar
-            </button>
+              centered
+            />
           )}
         </div>
       )}

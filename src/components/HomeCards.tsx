@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Pencil, Save, X } from 'lucide-react';
 import { supabase } from '../config/supabase';
 import { impulsosData, necesidadesData, Impulso, Necesidad } from '../data/impulsosData';
+import EditButton from './EditButton';
 
 interface AboutSectionContent {
   id: string;
@@ -234,42 +235,32 @@ const HomeCards = () => {
   }
 
   return (
-    <section className="py-16 bg-warm-white">
+    <>
+    {/* <section className="py-16 bg-warm-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 mb-12 relative">
-          {/* Botones de edición - Solo para usuarios autenticados */}
-          {isAuthenticated && (
-            <div className="absolute top-0 right-0 z-10">
-              {isEditing ? (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleSave}
-                    className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                  >
-                    <Save className="h-4 w-4 mr-1" />
-                    Guardar
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Cancelar
-                  </button>
-                </div>
-              ) : (
+          {isAuthenticated ? (
+            isEditing ? (
+              <div className="flex space-x-2">
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center bg-accent-purple hover:bg-accent-purple/90 text-white px-3 py-1 rounded text-sm"
+                  onClick={handleSave}
+                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
                 >
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Editar
+                  <Save className="h-4 w-4" />
                 </button>
-              )}
-            </div>
-          )}
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <EditButton onClick={() => setIsEditing(true)} centered />
+            )
+          ) : null}
 
-          {/* Title Column */}
+
           <div className="lg:col-span-1">
             {isEditing && isAuthenticated ? (
               <textarea
@@ -285,7 +276,7 @@ const HomeCards = () => {
             )}
           </div>
 
-          {/* Content Column */}
+
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-4">
               {isEditing && isAuthenticated ? (
@@ -332,7 +323,7 @@ const HomeCards = () => {
           </div>
         </div>
 
-        {/* Primary Cards */}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {primaryCards.map((card, index) => (
             <Link key={index} to={card.link} className="group cursor-pointer">
@@ -361,7 +352,7 @@ const HomeCards = () => {
           ))}
         </div>
       </div>
-    </section>
+    </section> */} </>
   );
 };
 

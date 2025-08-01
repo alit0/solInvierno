@@ -4,6 +4,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight, X, Pencil, Save, PlusCircle, MoveUp, MoveDown, Trash2 } from 'lucide-react';
 import { supabase } from '../config/supabase';
 import '../embla.css';
+import EditButton from './EditButton';
 
 interface GalleryContent {
   id: string;
@@ -345,7 +346,13 @@ const Gallery = () => {
                       Guardar
                     </button>
                     <button
-                      onClick={handleCancel}
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditedContent(galleryContent);
+                        setEditedImages(galleryImages);
+                        setNewImageUrl('');
+                        setNewImageAlt('');
+                      }}
                       className="flex items-center bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
                     >
                       <X className="h-4 w-4 mr-1" />
@@ -353,13 +360,10 @@ const Gallery = () => {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center bg-accent-purple hover:bg-accent-purple/90 text-white px-3 py-1 rounded text-sm"
-                  >
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Editar
-                  </button>
+                  <EditButton 
+                    onClick={() => setIsEditing(true)} 
+                    centered
+                  />
                 )}
               </div>
             )}

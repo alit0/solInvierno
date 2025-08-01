@@ -1,13 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, AlertCircle, CheckCircle, Zap, MessageCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, AlertCircle, CheckCircle, Zap, MessageCircle, Calendar, Edit } from 'lucide-react';
 import { getImpulsoBySlug, getNecesidadesByImpulso } from '../data/impulsosData';
 import type { Necesidad } from '../data/impulsosData';
+import { supabase } from '../config/supabase';
 
 const ImpulsoDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const impulso = slug ? getImpulsoBySlug(slug) : undefined;
   const necesidades = impulso ? getNecesidadesByImpulso(impulso.id) : [];
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  // Verificar si el usuario es administrador
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // Verificar rol de administrador
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (!profileError && profileData?.role === 'admin') {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error('Error al verificar permisos de administrador:', error);
+        setIsAdmin(false);
+      }
+    };
+    
+    checkAdmin();
+    
+    // Suscribirse a cambios en la autenticación
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        // Si se cerró sesión, actualizar estado inmediatamente
+        setIsAdmin(false);
+      } else {
+        // Si hay nueva sesión, verificar rol
+        checkAdmin();
+      }
+    });
+    
+    // Limpiar suscripción cuando el componente se desmonte
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   if (!impulso) {
     return (
@@ -73,9 +122,20 @@ const ImpulsoDetail: React.FC = () => {
             <ArrowLeft className="w-5 h-5 mr-2" />
             Volver a Nuestros Impulsos
           </Link>
-          <h1 className="text-3xl lg:text-4xl font-heading font-bold text-sage-green">
-            {impulso.nombre_impulso}
-          </h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-3xl lg:text-4xl font-heading font-bold text-sage-green">
+              {impulso.nombre_impulso}
+            </h1>
+            {isAdmin && (
+              <Link 
+                to={`/admin/pedidos-redirect/${impulso.id}`}
+                className="flex items-center bg-accent-purple hover:bg-accent-purple/90 text-white px-4 py-2 rounded-md font-medium transition-colors"
+              >
+                <Edit className="w-5 h-5 mr-2" />
+                Gestionar pedidos
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -100,7 +160,7 @@ const ImpulsoDetail: React.FC = () => {
             </div>
 
             {/* Información práctica */}
-            <div className="bg-blue-gray rounded-xl p-6 space-y-4">
+            <div className="bg-blue-gray/50 rounded-xl p-6 space-y-4">
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 text-sage-green mr-3" />
                 <div>

@@ -81,16 +81,38 @@ const ImpulsosGrid: React.FC = () => {
             
           if (profileError) {
             console.error('Error al verificar rol de administrador:', profileError);
+            setIsAdmin(false);
           } else {
             setIsAdmin(profileData?.role === 'admin');
           }
+        } else {
+          setIsAdmin(false);
         }
       } catch (err) {
         console.error('Error al verificar sesión:', err);
+        setIsAdmin(false);
       }
     };
     
     checkSession();
+    
+    // Suscribirse a cambios en la autenticación
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      
+      if (!session) {
+        // Si se cerró sesión, actualizar estado inmediatamente
+        setIsAdmin(false);
+      } else {
+        // Si hay nueva sesión, verificar rol
+        checkSession();
+      }
+    });
+    
+    // Limpiar suscripción cuando el componente se desmonte
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   // Cargar impulsos desde Supabase
@@ -245,7 +267,7 @@ const ImpulsosGrid: React.FC = () => {
                     />
                     
                     {/* Overlay gradiente */}
-                    <div className="absolute bottom-0 left-0 right-0 w-full h-3/4 bg-gradient-to-b from-white/5 to-white/95"></div>
+                    <div className="absolute bottom-0 left-0 right-0 w-full h-3/4 bg-gradient-to-b from-white/5 via-white via-70% to-white"></div>
                     
                     {/* Badges de necesidades - Posicionados en la parte superior */}
                     {badges && badges.total > 0 && (
@@ -263,8 +285,8 @@ const ImpulsosGrid: React.FC = () => {
                         )}
                         
                         {badges.cubiertas > 0 && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                            {badges.cubiertas} Cubierta{badges.cubiertas > 1 ? 's' : ''}
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border-yellow-200">
+                            {badges.cubiertas} Cubierta{badges.cubiertas > 1 ? 's' : ''} temporalmente
                           </span>
                         )}
                       </div>
@@ -276,13 +298,27 @@ const ImpulsosGrid: React.FC = () => {
                         {impulso.nombre_impulso}
                       </h3>
                       <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                        {impulso.descripcion_corta}
+                        {impulso.descripcion_corta.length > 100
+                          ? `${impulso.descripcion_corta.substring(0, 100)}...`
+                          : impulso.descripcion_corta}
                       </p>
-                      <div className="flex justify-end">
-                        <button className="inline-flex items-center px-3 py-1.5 bg-accent-purple text-white text-sm font-medium rounded-lg hover:bg-accent-purple/90 transition-colors">
-                          Leer más
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </button>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sage-green text-sm font-medium flex items-center gap-1 group-hover:text-accent-purple transition-colors">
+                          Ver más <ArrowRight className="w-4 h-4" />
+                        </span>
+                        
+                        {/* Botón de administración de pedidos - Solo visible para administradores */}
+                        {isAdmin && (
+                          <Link 
+                            to={`/admin/pedidos-redirect/${impulso.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Evitar propagación del click
+                            }}
+                            className="bg-accent-purple text-white text-xs px-2 py-1 rounded hover:bg-accent-purple/80 transition-colors cursor-pointer"
+                          >
+                            Gestionar pedidos
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>

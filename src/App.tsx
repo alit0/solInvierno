@@ -17,6 +17,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminImpulsos from './pages/AdminImpulsos';
 import AdminImpulsoForm from './pages/AdminImpulsoForm';
 import AdminPedidos from './pages/AdminPedidos';
+import PedidosAdminRedirect from './pages/PedidosAdminRedirect';
 
 function App() {
   // Determine if current path is admin route
@@ -51,6 +52,9 @@ function App() {
             <Route path="/admin/impulsos/nuevo" element={<AdminImpulsoForm />} />
             <Route path="/admin/impulsos/:id" element={<AdminImpulsoForm />} />
             <Route path="/admin/pedidos/:impulsoId" element={<AdminPedidos />} />
+            
+            {/* Ruta de redirección para resolver problema de IDs */}
+            <Route path="/admin/pedidos-redirect/:impulsoId" element={<PedidosAdminRedirect />} />
           </Routes>
         </main>
         {!isAdminRoute && <Footer />}
