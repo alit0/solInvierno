@@ -28,20 +28,23 @@ const ImpulsosGrid: React.FC = () => {
               to={`/impulsos/${impulso.slug}`}
               className="group cursor-pointer"
             >
-              <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden h-full">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={impulso.imagen_principal}
-                    alt={impulso.nombre_impulso}
-                    className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-heading font-semibold text-sage-green mb-2">
+              <div className="rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden h-full relative aspect-[4/5]">
+                {/* Imagen de fondo */}
+                <img 
+                  src={impulso.imagen_principal}
+                  alt={impulso.nombre_impulso}
+                  className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-500"
+                />
+                
+                {/* Overlay gradiente */}
+                <div className="absolute bottom-0 left-0 right-0 w-full h-3/4 bg-gradient-to-b from-white/5 to-white/95"></div>
+                
+                {/* Contenido de texto */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-gradient-to-b from-white/5 via-transparent to-white/95">
+                  <h3 className="text-xl font-heading font-semibold text-sage-green mb-2">
                     {impulso.nombre_impulso}
                   </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">
                     {impulso.descripcion_corta}
                   </p>
                   <button className="flex items-center text-accent-purple hover:text-accent-purple/80 font-medium transition-colors group text-sm">
