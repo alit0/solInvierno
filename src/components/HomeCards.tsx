@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Pencil, Save, X } from 'lucide-react';
 import { supabase } from '../config/supabase';
+import { impulsosData, necesidadesData, Impulso, Necesidad } from '../data/impulsosData';
 
 interface AboutSectionContent {
   id: string;
@@ -24,6 +25,10 @@ const HomeCards = () => {
   
   // Estado para mostrar mensajes de loading/error
   const [status, setStatus] = useState({ loading: true, error: '' });
+
+  // Utilizamos estados para mantener compatibilidad con el código existente
+  const [impulsos, setImpulsos] = useState<Impulso[]>([]);
+  const [necesidadesPorImpulso, setNecesidadesPorImpulso] = useState<Record<string, Necesidad[]>>({});
 
   const primaryCards = [
     {
@@ -102,6 +107,63 @@ const HomeCards = () => {
     
     fetchContent();
   }, []);
+
+  // Reemplazamos el useEffect de carga de impulsos y pedidos para usar datos estáticos
+  useEffect(() => {
+    console.log('Cargando datos estáticos en HomeCards.tsx');
+    
+    // Filtramos solo los impulsos activos
+    const impulsosActivos = impulsosData.filter(impulso => impulso.activo);
+    setImpulsos(impulsosActivos);
+    
+    console.log('Impulsos cargados:', impulsosActivos.length);
+    
+    // Agrupamos las necesidades por impulso_id (equivalentes a pedidos)
+    const necesidadesPorImpulso: Record<string, Necesidad[]> = {};
+    necesidadesData.forEach((necesidad) => {
+      // Solo incluimos necesidades de impulsos activos
+      if (impulsosActivos.some(impulso => impulso.id === necesidad.impulso_id)) {
+        if (!necesidadesPorImpulso[necesidad.impulso_id]) {
+          necesidadesPorImpulso[necesidad.impulso_id] = [];
+        }
+        necesidadesPorImpulso[necesidad.impulso_id].push(necesidad);
+      }
+    });
+    
+    // Log detallado de los pedidos agrupados
+    console.log("Desglose de necesidades por impulso (datos estáticos):");
+    impulsosActivos.forEach(impulso => {
+      const necesidadesDelImpulso = necesidadesPorImpulso[impulso.id] || [];
+      console.log(`Impulso: ${impulso.nombre_impulso} (ID: ${impulso.id}): ${necesidadesDelImpulso.length} necesidades`);
+      necesidadesDelImpulso.forEach(necesidad => {
+        console.log(`  - Necesidad: ${necesidad.titulo_necesidad} (Estado: ${necesidad.estado_necesidad})`);
+      });
+    });
+    
+    setNecesidadesPorImpulso(necesidadesPorImpulso);
+    
+  }, []);
+
+  // Función para obtener los badges según las necesidades del impulso
+  const getBadgesByImpulsoId = (impulsoId: string) => {
+    const necesidades = necesidadesPorImpulso[impulsoId] || [];
+    console.log(`Calculando badges para impulso ${impulsoId}, encontrados ${necesidades.length} necesidades`);
+    
+    // Contadores para cada tipo de estado
+    let urgentes = 0;
+    let abiertas = 0;
+    let cubiertas = 0;
+    
+    necesidades.forEach(necesidad => {
+      if (necesidad.estado_necesidad === 'Urgente') urgentes++;
+      else if (necesidad.estado_necesidad === 'Abierta') abiertas++;
+      else if (necesidad.estado_necesidad === 'Cubierta temporalmente') cubiertas++;
+    });
+    
+    console.log(`Badges para impulso ${impulsoId}: urgentes=${urgentes}, abiertas=${abiertas}, cubiertas=${cubiertas}, total=${necesidades.length}`);
+    
+    return { urgentes, abiertas, cubiertas, total: necesidades.length };
+  };
 
   // Manejar cambios en los campos editables
   const handleInputChange = (field: keyof AboutSectionContent, value: string) => {

@@ -14,10 +14,14 @@ import ImpulsoDetail from './components/ImpulsoDetail';
 import ScrollToTop from './components/ScrollToTop';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminImpulsos from './pages/AdminImpulsos';
+import AdminImpulsoForm from './pages/AdminImpulsoForm';
+import AdminPedidos from './pages/AdminPedidos';
 
 function App() {
   // Determine if current path is admin route
-  const isAdminRoute = window.location.pathname.startsWith('/adminsol');
+  const isAdminRoute = window.location.pathname.startsWith('/adminsol') || 
+                       window.location.pathname.startsWith('/admin');
 
   return (
     <Router>
@@ -39,7 +43,14 @@ function App() {
             
             {/* Rutas de administrador (secretas) */}
             <Route path="/adminsol" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/adminsol/dashboard" element={<AdminDashboard />} />
+            
+            {/* Rutas para administración de impulsos y pedidos */}
+            <Route path="/admin/impulsos" element={<AdminImpulsos />} />
+            <Route path="/admin/impulsos/nuevo" element={<AdminImpulsoForm />} />
+            <Route path="/admin/impulsos/:id" element={<AdminImpulsoForm />} />
+            <Route path="/admin/pedidos/:impulsoId" element={<AdminPedidos />} />
           </Routes>
         </main>
         {!isAdminRoute && <Footer />}
