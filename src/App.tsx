@@ -4,7 +4,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import LaEscuela from './pages/LaEscuela';
 import Niveles from './pages/Niveles';
-import Impulsos from './pages/Impulsos';
+import PropuestaEducativa from './pages/PropuestaEducativa';
 import LaTiendita from './pages/LaTiendita';
 import Inscripciones from './pages/Inscripciones';
 import Donaciones from './pages/Donaciones';
@@ -18,6 +18,7 @@ import AdminImpulsos from './pages/AdminImpulsos';
 import AdminImpulsoForm from './pages/AdminImpulsoForm';
 import AdminPedidos from './pages/AdminPedidos';
 import PedidosAdminRedirect from './pages/PedidosAdminRedirect';
+import Impulsos from './pages/Impulsos';
 
 function App() {
   // Determine if current path is admin route
@@ -34,6 +35,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/la-escuela" element={<LaEscuela />} />
             <Route path="/niveles" element={<Niveles />} />
+            <Route path="/propuesta-educativa" element={<PropuestaEducativa />} />
             <Route path="/impulsos" element={<Impulsos />} />
             <Route path="/impulsos/:slug" element={<ImpulsoDetail />} />
             <Route path="/la-tiendita" element={<LaTiendita />} />

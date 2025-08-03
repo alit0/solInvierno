@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Plus, Loader2 } from 'lucide-react';
 import { supabase } from '../config/supabase';
 import type { Session } from '@supabase/supabase-js';
-import { impulsosData, necesidadesData } from '../data/impulsosData';
 
 // Interfaces
 interface Impulso {
@@ -34,8 +33,6 @@ interface Pedido {
 }
 
 const ImpulsosGrid: React.FC = () => {
-  // Usamos directamente los datos estáticos de impulsos para mostrar los badges
-  const [impulsosEstaticos] = useState(impulsosData);
   const [impulsos, setImpulsos] = useState<Impulso[]>([]);
   const [necesidadesPorImpulso, setNecesidadesPorImpulso] = useState<Record<string, Pedido[]>>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -122,12 +119,12 @@ const ImpulsosGrid: React.FC = () => {
       setError(null);
       
       try {
-        // Consultar impulsos ordenados por created_at descendiente para mostrar nuevos primero
+        // Consultar impulsos ordenados por orden_visual para mantener el orden deseado
         const { data: impulsosData, error: impulsosError } = await supabase
           .from('impulsos')
           .select('*')
           .eq('activo', true)
-          .order('created_at', { ascending: false });
+          .order('orden_visual', { ascending: true });
         
         if (impulsosError) {
           throw impulsosError;
@@ -146,31 +143,45 @@ const ImpulsosGrid: React.FC = () => {
     fetchImpulsos();
   }, []);
 
-  // Cargar datos estáticos de necesidades para los badges
+  // Cargar necesidades desde Supabase para los badges
   useEffect(() => {
-    console.log('Cargando datos estáticos de necesidades en ImpulsosGrid.tsx');
-    console.log('Total de impulsos estáticos:', impulsosData.length);
-    console.log('Total de necesidades estáticas:', necesidadesData.length);
-    
-    // Agrupamos las necesidades por impulso_id (para usar en los badges)
-    const necesidadesAgrupadas: Record<string, Pedido[]> = {};
-    
-    necesidadesData.forEach((necesidad) => {
-      if (!necesidadesAgrupadas[necesidad.impulso_id]) {
-        necesidadesAgrupadas[necesidad.impulso_id] = [];
+    const fetchNecesidades = async () => {
+      try {
+        const { data: pedidosData, error: pedidosError } = await supabase
+          .from('pedidos')
+          .select('*')
+          .eq('activo', true);
+          
+        if (pedidosError) {
+          console.error('Error al cargar pedidos:', pedidosError);
+          return;
+        }
+        
+        console.log('Pedidos cargados desde Supabase:', pedidosData?.length);
+        
+        // Agrupamos los pedidos por impulso_id (para usar en los badges)
+        const pedidosAgrupados: Record<string, Pedido[]> = {};
+        
+        pedidosData.forEach((pedido) => {
+          if (!pedidosAgrupados[pedido.impulso_id]) {
+            pedidosAgrupados[pedido.impulso_id] = [];
+          }
+          pedidosAgrupados[pedido.impulso_id].push(pedido);
+        });
+        
+        console.log("Desglose de pedidos por impulso (desde Supabase):");
+        Object.keys(pedidosAgrupados).forEach(impulsoId => {
+          const pedidosDelImpulso = pedidosAgrupados[impulsoId] || [];
+          console.log(`Impulso ID: ${impulsoId}: ${pedidosDelImpulso.length} pedidos`);
+        });
+        
+        setNecesidadesPorImpulso(pedidosAgrupados);
+      } catch (err) {
+        console.error('Error al procesar pedidos:', err);
       }
-      necesidadesAgrupadas[necesidad.impulso_id].push(necesidad);
-    });
+    };
     
-    // Log detallado de las necesidades agrupadas
-    console.log("Desglose de necesidades por impulso (datos estáticos):");
-    Object.keys(necesidadesAgrupadas).forEach(impulsoId => {
-      const necesidadesDelImpulso = necesidadesAgrupadas[impulsoId] || [];
-      const impulsoRelacionado = impulsosData.find(imp => imp.id === impulsoId);
-      console.log(`Impulso ID: ${impulsoId} (${impulsoRelacionado?.nombre_impulso || 'desconocido'}): ${necesidadesDelImpulso.length} necesidades`);
-    });
-    
-    setNecesidadesPorImpulso(necesidadesAgrupadas);
+    fetchNecesidades();
   }, []);
   
   // Función para redirigir a la página de administración de impulsos
@@ -199,10 +210,10 @@ const ImpulsosGrid: React.FC = () => {
   return (
     <section className="py-16 bg-warm-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+          <div className="w-full sm:w-3/4 mb-8 sm:mb-0">
             <h2 className="text-3xl font-heading font-bold text-sage-green">Nuestros Impulsos</h2>
-            <p className="text-gray-600 mt-2">Conoce todas nuestras propuestas comunitarias</p>
+            <p className="text-gray-600 mt-2">Conoce la esencia de nuestra autogestión: una comunidad de padres activa y colaborativa. Cada familia participa activamente en la construcción de nuestra comunidad educativa, aportando sus talentos y energías para crear un ambiente rico y diverso donde nuestros hijos puedan crecer.</p>
           </div>
 
           {isAdmin && (
@@ -232,25 +243,8 @@ const ImpulsosGrid: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {impulsos.map((impulso) => {
-              // Para encontrar el impulso estático correspondiente, intentamos buscar por id o por slug
-              const impulsoEstatico = impulsosEstaticos.find(
-                imp => imp.id === impulso.id || imp.slug === impulso.slug
-              );
-              
-              // Log para depuración
-              console.log(`Impulso de Supabase: ${impulso.nombre_impulso} (id: ${impulso.id}, slug: ${impulso.slug})`);
-              console.log(`Impulso estático encontrado: ${impulsoEstatico ? 'SÍ' : 'NO'}`);
-              
-              // Si encontramos el impulso estático, usamos su ID para obtener los badges
-              let badges = null;
-              if (impulsoEstatico) {
-                console.log(`Usando ID estático: ${impulsoEstatico.id} para obtener badges`);
-                badges = getBadgesByImpulsoId(impulsoEstatico.id);
-              } else {
-                // Si no encontramos el impulso estático, intentamos usar directamente el ID del impulso de Supabase
-                console.log(`Intentando usar ID de Supabase: ${impulso.id} para obtener badges`);
-                badges = getBadgesByImpulsoId(impulso.id);
-              }
+              // Obtener badges directamente usando el ID del impulso de Supabase
+              const badges = getBadgesByImpulsoId(impulso.id);
               
               return (
                 <Link 
@@ -263,11 +257,8 @@ const ImpulsosGrid: React.FC = () => {
                     <img 
                       src={impulso.imagen_principal}
                       alt={impulso.nombre_impulso}
-                      className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-4/5 object-cover absolute group-hover:scale-105 transition-transform duration-500"
                     />
-                    
-                    {/* Overlay gradiente */}
-                    <div className="absolute bottom-0 left-0 right-0 w-full h-3/4 bg-gradient-to-b from-white/5 via-white via-70% to-white"></div>
                     
                     {/* Badges de necesidades - Posicionados en la parte superior */}
                     {badges && badges.total > 0 && (
@@ -293,7 +284,7 @@ const ImpulsosGrid: React.FC = () => {
                     )}
                     
                     {/* Contenido de texto */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10 bg-white">
                       <h3 className="text-xl font-heading font-semibold text-sage-green mb-2">
                         {impulso.nombre_impulso}
                       </h3>

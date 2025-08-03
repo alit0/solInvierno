@@ -247,19 +247,107 @@ const AdminImpulsoForm = () => {
         imagen_principal: imageUrl
       };
       
+      // Log para depuración - ver qué datos se están enviando
+      console.log('Datos a actualizar:', impulsoData);
+      console.log('ID del impulso a actualizar:', id);
+      
       // Guardar impulso (insertar o actualizar)
       if (isEditing && id) {
-        const { error } = await supabase
+        // Primero verificar que el impulso existe
+        const { data: existingImpulso, error: checkError } = await supabase
           .from('impulsos')
-          .update(impulsoData)
-          .eq('id', id);
+          .select('id, nombre_impulso')
+          .eq('id', id)
+          .single();
           
-        if (error) throw error;
+        if (checkError) {
+          console.error('Error al verificar impulso existente:', checkError);
+          throw new Error(`No se encontró el impulso con ID: ${id}`);
+        }
         
-        setMessage({
-          text: 'Impulso actualizado correctamente',
-          type: 'success'
-        });
+        console.log('Impulso encontrado:', existingImpulso);
+        
+        // Crear objeto de actualización explícito solo con los campos que queremos actualizar
+        const updateData = {
+          nombre_impulso: impulsoData.nombre_impulso,
+          descripcion_corta: impulsoData.descripcion_corta,
+          imagen_principal: impulsoData.imagen_principal,
+          dias_horarios: impulsoData.dias_horarios,
+          direccion: impulsoData.direccion,
+          whatsapp_contacto: impulsoData.whatsapp_contacto,
+          orden_visual: impulsoData.orden_visual,
+          activo: impulsoData.activo,
+          slug: impulsoData.slug,
+          updated_at: new Date().toISOString() // Agregar marca de tiempo actualizada
+        };
+        
+        console.log('Datos actualizados filtrados:', updateData);
+        
+        try {
+          // Intentar actualización con autenticación explícita
+          const { data: updatedData, error } = await supabase
+            .from('impulsos')
+            .update(updateData)
+            .eq('id', id)
+            .select();
+            
+          if (error) {
+            console.error('Error específico de Supabase:', error);
+            throw error;
+          }
+          
+          console.log('Respuesta de actualización:', updatedData);
+          
+          if (!updatedData || updatedData.length === 0) {
+            // Intentar enfoque alternativo si la primera actualización no funcionó
+            console.log("La actualización no tuvo efecto. Intentando con enfoque alternativo...");
+            
+            // Enfoque alternativo: usar upsert con el campo updated_at explícito
+            const { data: upsertData, error: upsertError } = await supabase
+              .from('impulsos')
+              .upsert({
+                id,
+                nombre_impulso: updateData.nombre_impulso,
+                descripcion_corta: updateData.descripcion_corta,
+                imagen_principal: updateData.imagen_principal,
+                dias_horarios: updateData.dias_horarios,
+                direccion: updateData.direccion,
+                whatsapp_contacto: updateData.whatsapp_contacto,
+                orden_visual: updateData.orden_visual,
+                activo: updateData.activo,
+                slug: updateData.slug,
+                updated_at: new Date().toISOString()
+              })
+              .select();
+              
+            if (upsertError) {
+              console.error('Error en upsert:', upsertError);
+              throw upsertError;
+            }
+            
+            console.log('Resultado de upsert:', upsertData);
+          }
+          
+          // Verificar el resultado final con una consulta adicional
+          const { data: verifyData } = await supabase
+            .from('impulsos')
+            .select('descripcion_corta')
+            .eq('id', id)
+            .single();
+            
+          console.log('Verificación post-actualización:', verifyData);
+          
+          setMessage({
+            text: 'Impulso actualizado correctamente',
+            type: 'success'
+          });
+        } catch (error: any) {
+          console.error('Error al guardar impulso:', error);
+          setMessage({
+            text: 'Error al guardar impulso: ' + (error.message || 'Desconocido'),
+            type: 'error'
+          });
+        }
       } else {
         const { error } = await supabase
           .from('impulsos')

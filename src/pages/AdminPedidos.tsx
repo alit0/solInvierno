@@ -11,23 +11,29 @@ interface Impulso {
 interface Pedido {
   id: string;
   impulso_id: string;
-  titulo: string;
-  descripcion: string;
-  urgencia: 'Urgente' | 'Abierta' | 'Cubierta temporalmente';
+  titulo_necesidad: string;
+  descripcion_necesidad: string;
+  estado_necesidad: 'Urgente' | 'Abierta' | 'Cubierta temporalmente';
   tiempo_compromiso: string;
+  dias_compromiso: string;
   activo: boolean;
   created_at?: string;
+  orden_visual?: number;
+  fecha_publicacion?: string;
 }
 
 const defaultPedido = {
   id: '',
   impulso_id: '',
-  titulo: '',
-  descripcion: '',
-  urgencia: 'Abierta' as const,
+  titulo_necesidad: '',
+  descripcion_necesidad: '',
+  estado_necesidad: 'Abierta' as const,
   tiempo_compromiso: '',
+  dias_compromiso: '',
   activo: true,
-  created_at: ''
+  orden_visual: 1,
+  created_at: '',
+  fecha_publicacion: new Date().toISOString().split('T')[0]
 };
 
 const AdminPedidos = () => {
@@ -106,8 +112,8 @@ const AdminPedidos = () => {
           .from('pedidos')
           .select('*')
           .eq('impulso_id', impulsoId)
-          .order('urgencia', { ascending: false })
-          .order('created_at', { ascending: false });
+          .order('estado_necesidad', { ascending: false })
+          .order('orden_visual', { ascending: true });
           
         if (pedidosError) throw pedidosError;
         setPedidos(pedidosData || []);
@@ -164,12 +170,12 @@ const AdminPedidos = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    if (!currentPedido.titulo.trim()) {
-      errors.titulo = 'El título es obligatorio';
+    if (!currentPedido.titulo_necesidad.trim()) {
+      errors.titulo_necesidad = 'El título es obligatorio';
     }
     
-    if (!currentPedido.descripcion.trim()) {
-      errors.descripcion = 'La descripción es obligatoria';
+    if (!currentPedido.descripcion_necesidad.trim()) {
+      errors.descripcion_necesidad = 'La descripción es obligatoria';
     }
 
     setValidationErrors(errors);
@@ -189,10 +195,11 @@ const AdminPedidos = () => {
         const { error } = await supabase
           .from('pedidos')
           .update({
-            titulo: currentPedido.titulo,
-            descripcion: currentPedido.descripcion,
-            urgencia: currentPedido.urgencia,
+            titulo_necesidad: currentPedido.titulo_necesidad,
+            descripcion_necesidad: currentPedido.descripcion_necesidad,
+            estado_necesidad: currentPedido.estado_necesidad,
             tiempo_compromiso: currentPedido.tiempo_compromiso,
+            dias_compromiso: currentPedido.dias_compromiso,
             activo: currentPedido.activo
           })
           .eq('id', currentPedido.id);
@@ -214,11 +221,14 @@ const AdminPedidos = () => {
           .from('pedidos')
           .insert([{
             impulso_id: impulsoId,
-            titulo: currentPedido.titulo,
-            descripcion: currentPedido.descripcion,
-            urgencia: currentPedido.urgencia,
+            titulo_necesidad: currentPedido.titulo_necesidad,
+            descripcion_necesidad: currentPedido.descripcion_necesidad,
+            estado_necesidad: currentPedido.estado_necesidad,
             tiempo_compromiso: currentPedido.tiempo_compromiso,
-            activo: currentPedido.activo
+            dias_compromiso: currentPedido.dias_compromiso,
+            activo: currentPedido.activo,
+            orden_visual: currentPedido.orden_visual,
+            fecha_publicacion: currentPedido.fecha_publicacion
           }])
           .select();
           
@@ -376,12 +386,12 @@ const AdminPedidos = () => {
                 {pedidos.map((pedido) => (
                   <tr key={pedido.id}>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{pedido.titulo}</div>
-                      <div className="text-sm text-gray-500 truncate max-w-xs">{pedido.descripcion}</div>
+                      <div className="text-sm font-medium text-gray-900">{pedido.titulo_necesidad}</div>
+                      <div className="text-sm text-gray-500 truncate max-w-xs">{pedido.descripcion_necesidad}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getUrgencyColor(pedido.urgencia)}`}>
-                        {pedido.urgencia}
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getUrgencyColor(pedido.estado_necesidad)}`}>
+                        {pedido.estado_necesidad}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -445,51 +455,51 @@ const AdminPedidos = () => {
             <form onSubmit={handleSubmit}>
               <div className="p-5 space-y-4">
                 <div>
-                  <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="titulo_necesidad" className="block text-sm font-medium text-gray-700 mb-1">
                     Título *
                   </label>
                   <input
                     type="text"
-                    id="titulo"
-                    name="titulo"
-                    value={currentPedido.titulo}
+                    id="titulo_necesidad"
+                    name="titulo_necesidad"
+                    value={currentPedido.titulo_necesidad}
                     onChange={handleInputChange}
                     className={`block w-full px-3 py-2 border ${
-                      validationErrors.titulo ? 'border-red-500' : 'border-gray-300'
+                      validationErrors.titulo_necesidad ? 'border-red-500' : 'border-gray-300'
                     } rounded-md focus:outline-none focus:ring-sage-green focus:border-sage-green`}
                   />
-                  {validationErrors.titulo && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.titulo}</p>
+                  {validationErrors.titulo_necesidad && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.titulo_necesidad}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="descripcion_necesidad" className="block text-sm font-medium text-gray-700 mb-1">
                     Descripción *
                   </label>
                   <textarea
-                    id="descripcion"
-                    name="descripcion"
+                    id="descripcion_necesidad"
+                    name="descripcion_necesidad"
                     rows={3}
-                    value={currentPedido.descripcion}
+                    value={currentPedido.descripcion_necesidad}
                     onChange={handleInputChange}
                     className={`block w-full px-3 py-2 border ${
-                      validationErrors.descripcion ? 'border-red-500' : 'border-gray-300'
+                      validationErrors.descripcion_necesidad ? 'border-red-500' : 'border-gray-300'
                     } rounded-md focus:outline-none focus:ring-sage-green focus:border-sage-green`}
                   />
-                  {validationErrors.descripcion && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.descripcion}</p>
+                  {validationErrors.descripcion_necesidad && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.descripcion_necesidad}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="urgencia" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="estado_necesidad" className="block text-sm font-medium text-gray-700 mb-1">
                     Urgencia
                   </label>
                   <select
-                    id="urgencia"
-                    name="urgencia"
-                    value={currentPedido.urgencia}
+                    id="estado_necesidad"
+                    name="estado_necesidad"
+                    value={currentPedido.estado_necesidad}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sage-green focus:border-sage-green"
                   >
@@ -510,6 +520,21 @@ const AdminPedidos = () => {
                     value={currentPedido.tiempo_compromiso}
                     onChange={handleInputChange}
                     placeholder="Ej: 2 horas semanales"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sage-green focus:border-sage-green"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="dias_compromiso" className="block text-sm font-medium text-gray-700 mb-1">
+                    Días de Compromiso
+                  </label>
+                  <input
+                    type="text"
+                    id="dias_compromiso"
+                    name="dias_compromiso"
+                    value={currentPedido.dias_compromiso}
+                    onChange={handleInputChange}
+                    placeholder="Ej: 2 días a la semana"
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-sage-green focus:border-sage-green"
                   />
                 </div>

@@ -189,6 +189,13 @@ const Header = () => {
                   Niveles
                 </a>
                 <a 
+                  href="/propuesta-educativa" 
+                  onClick={(e) => scrollToSection('/propuesta-educativa', e)}
+                  className="block px-4 py-3 text-sage-green hover:text-accent-purple hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Propuesta Educativa
+                </a>
+                <a 
                   href="/la-escuela#pedagogia-waldorf" 
                   onClick={(e) => scrollToSection('/la-escuela#pedagogia-waldorf', e)}
                   className="block px-4 py-3 text-sage-green hover:text-accent-purple hover:bg-gray-50 transition-colors cursor-pointer"

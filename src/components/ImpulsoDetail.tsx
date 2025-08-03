@@ -1,15 +1,85 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, AlertCircle, CheckCircle, Zap, MessageCircle, Calendar, Edit } from 'lucide-react';
-import { getImpulsoBySlug, getNecesidadesByImpulso } from '../data/impulsosData';
-import type { Necesidad } from '../data/impulsosData';
 import { supabase } from '../config/supabase';
+
+// Definir interfaces para los datos
+interface Necesidad {
+  id: string;
+  impulso_id: string;
+  titulo_necesidad: string;
+  descripcion_necesidad: string;
+  estado_necesidad: string;
+  tiempo_compromiso: string;
+  dias_compromiso: string;
+}
+
+interface Impulso {
+  id: string;
+  slug: string;
+  nombre_impulso: string;
+  descripcion_corta: string;
+  imagen_principal: string;
+  whatsapp_contacto: string;
+  dias_horarios: string;
+  direccion: string;
+}
 
 const ImpulsoDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const impulso = slug ? getImpulsoBySlug(slug) : undefined;
-  const necesidades = impulso ? getNecesidadesByImpulso(impulso.id) : [];
+  const [impulso, setImpulso] = useState<Impulso | null>(null);
+  const [necesidades, setNecesidades] = useState<Necesidad[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar datos del impulso y sus necesidades desde Supabase
+  useEffect(() => {
+    const fetchImpulsoData = async () => {
+      try {
+        setLoading(true);
+        
+        // Obtener el impulso por slug
+        const { data: impulsoData, error: impulsoError } = await supabase
+          .from('impulsos')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+          
+        if (impulsoError) {
+          throw impulsoError;
+        }
+        
+        if (impulsoData) {
+          setImpulso(impulsoData);
+          
+          // Cargar necesidades asociadas al impulso
+          const { data: necesidadesData, error: necesidadesError } = await supabase
+            .from('pedidos')
+            .select('*')
+            .eq('impulso_id', impulsoData.id)
+            .eq('activo', true);
+            
+          if (necesidadesError) {
+            throw necesidadesError;
+          }
+          
+          setNecesidades(necesidadesData || []);
+        } else {
+          setError('No se encontró el impulso especificado');
+        }
+      } catch (error: any) {
+        console.error('Error al cargar datos:', error);
+        setError('Error al cargar datos: ' + (error.message || 'Desconocido'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (slug) {
+      fetchImpulsoData();
+    }
+  }, [slug]);
 
   // Verificar si el usuario es administrador
   useEffect(() => {
@@ -58,12 +128,24 @@ const ImpulsoDetail: React.FC = () => {
     };
   }, []);
 
-  if (!impulso) {
+  // Mostrar pantalla de carga mientras se obtienen los datos
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-warm-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-sage-green">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar mensaje de error si no se pudo obtener el impulso
+  if (error || !impulso) {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-heading font-bold text-sage-green mb-4">
-            Impulso no encontrado
+            {error || 'Impulso no encontrado'}
           </h2>
           <Link 
             to="/impulsos"
@@ -241,6 +323,26 @@ const ImpulsoDetail: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        
+        {/* Mostrar mensaje si no hay necesidades */}
+        {necesidades.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+            <h2 className="text-2xl font-heading font-bold text-sage-green mb-4">
+              Colabora con {impulso.nombre_impulso}
+            </h2>
+            <p className="text-lg text-gray-600">
+              Actualmente no hay necesidades específicas publicadas para este impulso.
+              Si estás interesado en colaborar, contacta directamente con el equipo.
+            </p>
+            <button 
+              onClick={generateGeneralWhatsApp}
+              className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center mx-auto"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Contactar por WhatsApp
+            </button>
           </div>
         )}
       </div>

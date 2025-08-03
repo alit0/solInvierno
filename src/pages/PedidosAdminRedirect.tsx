@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '../config/supabase';
-import { impulsosData } from '../data/impulsosData';
 
-// Este componente actúa como un "puente" para mapear IDs simples a UUIDs de Supabase
+// Este componente ahora redirige directamente usando el ID de Supabase
 const PedidosAdminRedirect: React.FC = () => {
   const { impulsoId } = useParams<{ impulsoId: string }>();
   const navigate = useNavigate();
@@ -17,27 +16,18 @@ const PedidosAdminRedirect: React.FC = () => {
           throw new Error('No se proporcionó un ID de impulso');
         }
 
-        // Buscar el impulso en los datos estáticos
-        const impulsoEstatico = impulsosData.find(imp => imp.id === impulsoId);
-        
-        if (!impulsoEstatico) {
-          throw new Error(`No se encontró el impulso con ID ${impulsoId} en los datos estáticos`);
-        }
-        
-        console.log('Impulso estático encontrado:', impulsoEstatico.nombre_impulso);
-        
-        // Buscar el impulso en Supabase por nombre o slug
+        // Verificar si el impulso existe directamente en Supabase
         const { data: impulsoSupabase, error: errorImpulso } = await supabase
           .from('impulsos')
           .select('id, nombre_impulso, slug')
-          .or(`nombre_impulso.ilike.${impulsoEstatico.nombre_impulso},slug.eq.${impulsoEstatico.slug}`)
+          .eq('id', impulsoId)
           .limit(1)
           .single();
         
         if (errorImpulso || !impulsoSupabase) {
           console.error('Error al buscar impulso en Supabase:', errorImpulso);
           
-          // Si no encontramos coincidencia, intentamos buscar todos los impulsos
+          // Si no encontramos el impulso, mostramos los disponibles para debugging
           const { data: todosImpulsos, error: errorTodos } = await supabase
             .from('impulsos')
             .select('id, nombre_impulso, slug')
@@ -45,13 +35,13 @@ const PedidosAdminRedirect: React.FC = () => {
             
           console.log('Todos los impulsos disponibles en Supabase:', todosImpulsos);
           
-          throw new Error(`No se pudo encontrar un impulso equivalente en la base de datos. 
+          throw new Error(`No se encontró el impulso con ID ${impulsoId} en la base de datos. 
                           Intente acceder desde la lista de impulsos.`);
         }
         
         console.log('Impulso encontrado en Supabase:', impulsoSupabase);
         
-        // Redirigir a la página de pedidos con el UUID correcto
+        // Redirigir directamente a la página de pedidos con el mismo ID
         navigate(`/admin/pedidos/${impulsoSupabase.id}`, { replace: true });
         
       } catch (err: any) {

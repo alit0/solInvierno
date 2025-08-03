@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Pencil, Save, X } from 'lucide-react';
 import { supabase } from '../config/supabase';
 import EditButton from './EditButton';
+import { Link } from 'react-router-dom';
 
 interface EducationalProposalContent {
   id: string;
@@ -300,12 +301,12 @@ const EducationalProposal = () => {
                   <p className="text-sm font-medium text-sage-green mb-4">
                     {content?.question_text || '¿Qué es la pedagogía Waldorf?'}
                   </p>
-                  <a 
-                    href={content?.button_url || '/propuesta-educativa'} 
-                    className="inline-block bg-accent-purple hover:bg-accent-purple/90 text-white px-8 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  <Link 
+                    to={content?.button_url || '/propuesta-educativa'} 
+                    className="inline-block bg-accent-purple hover:bg-accent-purple/90 text-white px-8 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap"
                   >
                     {content?.button_text || 'Propuesta educativa'}
-                  </a>
+                  </Link>
                 </>
               )}
             </div>

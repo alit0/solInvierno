@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate, Link } from 'react-router-dom';
+import { Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '../config/supabase';
 import { Plus, Edit, Trash2, ArrowLeft, AlertCircle, List } from 'lucide-react';
 
@@ -19,6 +19,7 @@ interface Impulso {
 
 const AdminImpulsos = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -65,32 +66,53 @@ const AdminImpulsos = () => {
     checkAuth();
   }, []);
 
-  // Cargar lista de impulsos
-  useEffect(() => {
-    const fetchImpulsos = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('impulsos')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          throw error;
-        }
+  // Función para cargar lista de impulsos
+  const fetchImpulsos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('impulsos')
+        .select('*')
+        .order('created_at', { ascending: false });
         
-        setImpulsos(data || []);
-      } catch (error: any) {
-        console.error('Error al cargar impulsos:', error);
-        setMessage({
-          text: 'Error al cargar impulsos: ' + (error.message || 'Desconocido'),
-          type: 'error'
-        });
+      if (error) {
+        throw error;
       }
-    };
-    
+      
+      setImpulsos(data || []);
+      console.log('Impulsos cargados:', data);
+    } catch (error: any) {
+      console.error('Error al cargar impulsos:', error);
+      setMessage({
+        text: 'Error al cargar impulsos: ' + (error.message || 'Desconocido'),
+        type: 'error'
+      });
+    }
+  };
+
+  // Cargar lista de impulsos cuando cambia la autenticación
+  useEffect(() => {
     if (isAuthenticated && isAdmin) {
       fetchImpulsos();
     }
+  }, [isAuthenticated, isAdmin]);
+
+  // Recargar impulsos cuando cambia la ubicación (ej: después de editar)
+  useEffect(() => {
+    if (isAuthenticated && isAdmin) {
+      fetchImpulsos();
+    }
+  }, [location.pathname]);
+
+  // Recargar datos cuando la ventana recupera el foco
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isAuthenticated && isAdmin) {
+        fetchImpulsos();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [isAuthenticated, isAdmin]);
 
   const handleDelete = async (impulsoId: string) => {

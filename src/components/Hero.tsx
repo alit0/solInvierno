@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import { Pencil, Save, X } from 'lucide-react';
 import EditButton from './EditButton';
+import { Link } from 'react-router-dom';
 
 interface HeroContent {
   id: string;
@@ -262,12 +263,12 @@ const Hero = () => {
             
             {/* CTA Buttons */}
             <div className="flex flex-row gap-3 pt-4 flex-wrap sm:flex-nowrap">
-              <button className="bg-accent-purple hover:bg-accent-purple/90 text-white px-8 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <Link to="/propuesta-educativa" className="bg-accent-purple hover:bg-accent-purple/90 text-white px-8 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap">
                 Propuesta educativa
-              </button>
-              <button className="border-2 border-accent-purple text-accent-purple hover:bg-accent-purple hover:text-white px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap">
+              </Link>
+              <Link to="/inscripciones" className="border-2 border-accent-purple text-accent-purple hover:bg-accent-purple hover:text-white px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap">
                 Próximas inscripciones
-              </button>
+              </Link>
             </div>
           </div>
 

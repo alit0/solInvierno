@@ -529,14 +529,14 @@ const Gallery = () => {
 
             {displayImages.length > 0 && !isEditing && (
               <>
-                <button onClick={scrollPrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110 z-10">
+                <button onClick={scrollPrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110 z-10 md:block hidden">
                   <ChevronLeft className="w-6 h-6 text-sage-green" />
                 </button>
-                <button onClick={scrollNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110 z-10">
+                <button onClick={scrollNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-300 hover:scale-110 z-10 md:block hidden">
                   <ChevronRight className="w-6 h-6 text-sage-green" />
                 </button>
 
-                <div className="flex justify-center mt-8 space-x-2">
+                <div className="flex justify-center mt-8 space-x-2 hidden md:block">
                   {displayImages.map((_, index) => (
                     <button
                       key={index}

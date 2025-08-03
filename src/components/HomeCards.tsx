@@ -235,8 +235,7 @@ const HomeCards = () => {
   }
 
   return (
-    <>
-    {/* <section className="py-16 bg-warm-white">
+<section className="py-16 bg-warm-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 mb-12 relative">
           {isAuthenticated ? (
@@ -352,7 +351,7 @@ const HomeCards = () => {
           ))}
         </div>
       </div>
-    </section> */} </>
+    </section>
   );
 };
 
