@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Plus, Loader2 } from 'lucide-react';
 import { supabase } from '../config/supabase';
 import type { Session } from '@supabase/supabase-js';
+import EditButton from './EditButton';
 
 // Interfaces
 interface Impulso {
@@ -39,6 +40,11 @@ const ImpulsosGrid: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [sectionTitle, setSectionTitle] = useState<string>('Nuestros Impulsos');
+  const [sectionText, setSectionText] = useState<string>('Conoce la esencia de nuestra autogestión: una comunidad de padres activa y colaborativa. Cada familia participa activamente en la construcción de nuestra comunidad educativa, aportando sus talentos y energías para crear un ambiente rico y diverso donde nuestros hijos puedan crecer.');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Función para obtener los badges según las necesidades del impulso
   const getBadgesByImpulsoId = (impulsoId: string) => {
@@ -69,6 +75,9 @@ const ImpulsosGrid: React.FC = () => {
         setSession(currentSession);
         
         if (currentSession) {
+          // Usuario autenticado
+          setIsAuthenticated(true);
+          
           // Verificar si el usuario es administrador
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
@@ -110,6 +119,30 @@ const ImpulsosGrid: React.FC = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
+  }, []);
+
+  // Cargar datos del contenido de la sección desde Supabase
+  useEffect(() => {
+    const fetchSectionContent = async () => {
+      try {
+        const { data: sectionData, error: sectionError } = await supabase
+          .from('homepage_content')
+          .select('title, subtitle')
+          .eq('section', 'impulsos')
+          .single();
+          
+        if (sectionError && sectionError.code !== 'PGRST116') { // PGRST116 es "No se encontraron resultados"
+          console.error('Error al cargar contenido de la sección:', sectionError);
+        } else if (sectionData) {
+          setSectionTitle(sectionData.title);
+          setSectionText(sectionData.subtitle);
+        }
+      } catch (error) {
+        console.error('Error al cargar contenido de la sección:', error);
+      }
+    };
+    
+    fetchSectionContent();
   }, []);
 
   // Cargar impulsos desde Supabase
@@ -183,7 +216,64 @@ const ImpulsosGrid: React.FC = () => {
     
     fetchNecesidades();
   }, []);
+
+  // Función para guardar cambios en el contenido de la sección
+  const handleSaveContent = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('homepage_content')
+        .update({
+          title: sectionTitle,
+          subtitle: sectionText
+        })
+        .eq('section', 'impulsos');
+        
+      if (error) {
+        console.error('Error al guardar cambios:', error);
+        // Si hay error, intentar insertar en vez de actualizar
+        const { error: insertError } = await supabase
+          .from('homepage_content')
+          .insert({
+            section: 'impulsos',
+            title: sectionTitle,
+            subtitle: sectionText,
+            content: '',
+            image_url: ''
+          });
+          
+        if (insertError) {
+          console.error('Error al insertar contenido:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Error al guardar cambios:', error);
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+    }
+  };
   
+  // Función para cancelar la edición
+  const handleCancelEdit = () => {
+    // Recargar los datos originales
+    const fetchOriginalContent = async () => {
+      const { data } = await supabase
+        .from('homepage_content')
+        .select('title, subtitle')
+        .eq('section', 'impulsos')
+        .single();
+        
+      if (data) {
+        setSectionTitle(data.title);
+        setSectionText(data.subtitle);
+      }
+    };
+    
+    fetchOriginalContent();
+    setIsEditing(false);
+  };
+
   // Función para redirigir a la página de administración de impulsos
   const handleAddImpulso = () => {
     window.location.href = '/admin/impulsos/new';
@@ -210,21 +300,106 @@ const ImpulsosGrid: React.FC = () => {
   return (
     <section className="py-16 bg-warm-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+        {/* Botones solo para móvil - centrados arriba */}
+        <div className="flex justify-center mb-6 sm:hidden">
+          <div className="flex flex-col items-center space-y-3">
+            {isAuthenticated && !isEditing && (
+              <EditButton
+                onClick={() => setIsEditing(true)}
+                label="Editar"
+              />
+            )}
+            {isAdmin && (
+              <button
+                onClick={handleAddImpulso}
+                className="flex items-center space-x-1 bg-sage-green hover:bg-sage-green/80 text-white px-4 py-2 rounded transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Nuevo Impulso</span>
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-8">
           <div className="w-full sm:w-3/4 mb-8 sm:mb-0">
-            <h2 className="text-3xl font-heading font-bold text-sage-green">Nuestros Impulsos</h2>
-            <p className="text-gray-600 mt-2">Conoce la esencia de nuestra autogestión: una comunidad de padres activa y colaborativa. Cada familia participa activamente en la construcción de nuestra comunidad educativa, aportando sus talentos y energías para crear un ambiente rico y diverso donde nuestros hijos puedan crecer.</p>
+            {isEditing ? (
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label htmlFor="sectionTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                    Título
+                  </label>
+                  <input
+                    id="sectionTitle"
+                    type="text"
+                    value={sectionTitle}
+                    onChange={(e) => setSectionTitle(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-sage-green focus:border-sage-green"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="sectionText" className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripción
+                  </label>
+                  <textarea
+                    id="sectionText"
+                    value={sectionText}
+                    onChange={(e) => setSectionText(e.target.value)}
+                    rows={4}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-sage-green focus:border-sage-green"
+                  />
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleSaveContent}
+                    disabled={isSaving}
+                    className="bg-sage-green hover:bg-sage-green/80 text-white px-4 py-2 rounded font-medium flex items-center"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      'Guardar'
+                    )}
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                    className="border border-gray-300 text-gray-700 px-4 py-2 rounded font-medium"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-3xl font-heading font-bold text-sage-green">{sectionTitle}</h2>
+                <p className="text-gray-600 mt-2">{sectionText}</p>
+              </>
+            )}
           </div>
 
-          {isAdmin && (
-            <button
-              onClick={handleAddImpulso}
-              className="flex items-center space-x-1 bg-sage-green hover:bg-sage-green/80 text-white px-4 py-2 rounded transition"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Nuevo Impulso</span>
-            </button>
-          )}
+          {/* Botones solo para desktop - a la derecha */}
+          <div className="hidden sm:flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            {isAuthenticated && !isEditing && (
+              <EditButton
+                onClick={() => setIsEditing(true)}
+                label="Editar"
+              />
+            )}
+
+            {isAdmin && (
+              <button
+                onClick={handleAddImpulso}
+                className="flex items-center space-x-1 bg-sage-green hover:bg-sage-green/80 text-white px-4 py-2 rounded transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Nuevo Impulso</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {impulsos.length === 0 ? (

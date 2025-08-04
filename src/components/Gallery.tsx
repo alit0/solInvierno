@@ -536,7 +536,7 @@ const Gallery = () => {
                   <ChevronRight className="w-6 h-6 text-sage-green" />
                 </button>
 
-                <div className="flex justify-center mt-8 space-x-2 hidden md:block">
+                <div className="hidden md:flex justify-center mt-8 space-x-2 p-2">
                   {displayImages.map((_, index) => (
                     <button
                       key={index}

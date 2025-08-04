@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, AlertCircle, CheckCircle, Zap, MessageCircle, Calendar, Edit } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, AlertCircle, CheckCircle, Zap, MessageCircle, Calendar, Edit, Share } from 'lucide-react';
 import { supabase } from '../config/supabase';
 
 // Definir interfaces para los datos
@@ -30,6 +30,7 @@ const ImpulsoDetail: React.FC = () => {
   const [impulso, setImpulso] = useState<Impulso | null>(null);
   const [necesidades, setNecesidades] = useState<Necesidad[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +89,9 @@ const ImpulsoDetail: React.FC = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
+          // Usuario autenticado
+          setIsAuthenticated(true);
+          
           // Verificar rol de administrador
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
@@ -102,10 +106,12 @@ const ImpulsoDetail: React.FC = () => {
           }
         } else {
           setIsAdmin(false);
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('Error al verificar permisos de administrador:', error);
         setIsAdmin(false);
+        setIsAuthenticated(false);
       }
     };
     
@@ -116,6 +122,7 @@ const ImpulsoDetail: React.FC = () => {
       if (!session) {
         // Si se cerró sesión, actualizar estado inmediatamente
         setIsAdmin(false);
+        setIsAuthenticated(false);
       } else {
         // Si hay nueva sesión, verificar rol
         checkAdmin();
@@ -161,6 +168,13 @@ const ImpulsoDetail: React.FC = () => {
   const generateWhatsAppMessage = (necesidad: Necesidad) => {
     const mensaje = `Hola! Estoy interesado/a en colaborar con "${necesidad.titulo_necesidad}" del impulso ${impulso.nombre_impulso}. Me gustaría conocer más detalles sobre esta oportunidad de voluntariado.`;
     const whatsappUrl = `https://wa.me/${impulso.whatsapp_contacto.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(mensaje)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const generateShareWhatsAppMessage = (necesidad: Necesidad) => {
+    const mensaje = `¡Mira esta oportunidad de colaborar! Se necesita ayuda con "${necesidad.titulo_necesidad}" para el impulso ${impulso.nombre_impulso}, fecha: ${necesidad.dias_compromiso}, horas: ${necesidad.tiempo_compromiso}. Si te interesa, contáctate con ellos directamente: https://solde.invierno/impulsos/${impulso.slug}`;
+    // Usar el número genérico o crear un número específico para compartir
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -311,7 +325,7 @@ const ImpulsoDetail: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex justify-end">
+                  <div className="flex justify-between">
                     <button 
                       onClick={() => generateWhatsAppMessage(necesidad)}
                       className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
@@ -319,6 +333,16 @@ const ImpulsoDetail: React.FC = () => {
                       <MessageCircle className="w-4 h-4 mr-1" />
                       Quiero Colaborar
                     </button>
+                    
+                    {isAuthenticated && (
+                      <button 
+                        onClick={() => generateShareWhatsAppMessage(necesidad)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center ml-2"
+                      >
+                        <Share className="w-4 h-4 mr-1" />
+                        Compartir
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
