@@ -93,10 +93,12 @@ const ImpulsosGrid: React.FC = () => {
           }
         } else {
           setIsAdmin(false);
+          setIsAuthenticated(false); // Asegurarse de actualizar isAuthenticated cuando no hay sesión
         }
       } catch (err) {
         console.error('Error al verificar sesión:', err);
         setIsAdmin(false);
+        setIsAuthenticated(false); // También actualizar en caso de error
       }
     };
     
@@ -109,6 +111,7 @@ const ImpulsosGrid: React.FC = () => {
       if (!session) {
         // Si se cerró sesión, actualizar estado inmediatamente
         setIsAdmin(false);
+        setIsAuthenticated(false); // Actualizar isAuthenticated cuando se cierra sesión
       } else {
         // Si hay nueva sesión, verificar rol
         checkSession();
